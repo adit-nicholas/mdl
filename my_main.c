@@ -57,74 +57,87 @@ void my_main() {
   screen t;
   color g;
   double step = 0.1;
-  
+  char axis;
+  double theta;
   s = new_stack();
   tmp = new_matrix(4, 1000);
   clear_screen( t );
 
   for (i=0;i<lastop;i++) {  
     switch (op[i].opcode) {
-    case 'push':
+    case PUSH:
       push(s);
       break;
-    case 'pop':
+    case POP:
       pop(s);
       break;
-    case 'move':
+    case MOVE:
       mat = make_translate(op[i].op.move.d[0],op[i].op.move.d[1]
 					   ,op[i].op.move.d[2]);
       matrix_mult(peek(s),mat);
       copy_matrix(mat,peek(s));
       free_matrix(mat);
       break;
-    case 'scale':
+    case SCALE:
       mat = make_scale(op[i].op.scale.d[0],op[i].op.scale.d[1],
 		       op[i].op.scale.d[2]);
       matrix_mult(peek(s),mat);
       copy_matrix(mat,peek(s));
       free_matrix(mat);
       break;
-    case 'rotate':
-      char axis =  &op[i].op.rotate.axis;
-      double theta = &op[i].op.rotate.degrees * (M_PI/180);
+    case ROTATE:
+      axis =  op[i].op.rotate.axis;
+      theta = op[i].op.rotate.degrees * (M_PI/180);
       if (axis = 'x')
 	mat = make_rotX(theta);
-    case 'sphere':
+      if (axis = 'y')
+	mat = make_rotY(theta);
+      else 
+	mat = make_rotZ(theta);
+      matrix_mult(peek(s),mat);
+      copy_matrix(mat,peek(s));
+      free_matrix(mat);
+      break;
+    case SPHERE:
       add_sphere(tmp, op[i].op.sphere.d[0],op[i].op.sphere.d[1],
 		 op[i].op.sphere.d[2],
 		 op[i].op.sphere.r,step);
       matrix_mult(peek(s),tmp);
-      draw_polygons(edges,s,c);
+      draw_polygons(tmp,t,g);
       tmp->lastcol = 0;
       break;
-    case 'box':
+    case BOX:
       add_box(tmp, op[i].op.box.d0[0],op[i].op.box.d0[1],
 	      op[i].op.box.d0[2],
 	      op[i].op.box.d1[0],op[i].op.box.d1[1],
 	      op[i].op.box.d1[2]);
       matrix_mult(peek(s),tmp);
-      draw_polygons(tmp,s,c);
+      draw_polygons(tmp,t,g);
       tmp -> lastcol = 0;
       break;
-    case 'torus':
+    case TORUS:
       add_torus(tmp,op[i].op.torus.d[0],op[i].op.torus.d[1],
 		op[i].op.torus.d[2],
 		op[i].op.torus.r0,op[i].op.torus.r1,step);
       matrix_mult(peek(s),tmp);
-      draw_polygons(edges,s,c);
+      draw_polygons(tmp,t,g);
       tmp->lastcol = 0;
       break;
-    case 'line':
+    case LINE:
       add_edge(tmp,op[i].op.line.p0[0],op[i].op.line.p0[1],
 	       op[i].op.line.p0[1],
 	       op[i].op.line.p1[0],op[i].op.line.p1[1],
 	       op[i].op.line.p1[1]);
       matrix_mult(peek(s),tmp);
-      draw_lines(tmp,s,c);
+      draw_lines(tmp,t,g);
       tmp->lastcol = 0;
       break;
-    case 'save':
-    case 'display':
+    case SAVE:
+      save_extension(t,op[i].op.save.p->name);
+      break;
+    case DISPLAY:
+      display(t);
+      break;
     default:
       printf("Invalid command\n");
    
